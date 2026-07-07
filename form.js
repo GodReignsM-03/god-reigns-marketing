@@ -17,124 +17,34 @@
 
 document.addEventListener('DOMContentLoaded', function () {
 
-  // ---- CONFIGURATION ----
-  // Replace this URL with your real Make.com webhook when ready
-  // It will look like: https://hook.us1.make.com/xxxxxxxxxxxxxxxx
-const HUBSPOT_TOKEN = 'REPLACE_IN_VERCEL';
+  window.formspree = window.formspree || function () {
+    (formspree.q = formspree.q || []).push(arguments);
+  };
 
-  // Grab the form elements
+  formspree('initForm', {
+    formElement: '#contactForm',
+    formId: 'xeebwabq',
+  });
+
   const form       = document.getElementById('contactForm');
   const submitBtn  = document.getElementById('submitBtn');
   const successMsg = document.getElementById('formSuccess');
+  const aside      = document.querySelector('.contact-aside');
 
-  // Only run this code if the form exists on the page
   if (!form) return;
 
-  // ---- FORM SUBMISSION ----
-  form.addEventListener('submit', async function (e) {
-
-    // Prevent the page from reloading (default browser behavior)
-    e.preventDefault();
-
-    // Disable the button so user cannot click twice
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Sending...';
-
-    // Collect all the form field values into one object
-    // This is the data that gets sent to Make.com then into your CRM
-    const formData = {
-      fullName:     document.getElementById('fullName').value.trim(),
-      businessName: document.getElementById('businessName').value.trim(),
-      phone:        document.getElementById('phone').value.trim(),
-      email:        document.getElementById('email').value.trim(),
-      service:      document.getElementById('service').value,
-      description:  document.getElementById('description').value.trim(),
-      source:       document.getElementById('source').value,
-      submittedAt:  new Date().toISOString(), // Timestamp of submission
-    };
-
-    // ---- SEND TO WEBHOOK ----
-   try {
-  const response = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${HUBSPOT_TOKEN}`,
-    },
-    body: JSON.stringify({
-      properties: {
-        firstname:    formData.fullName.split(' ')[0],
-        lastname:     formData.fullName.split(' ').slice(1).join(' '),
-        company:      formData.businessName,
-        phone:        formData.phone,
-        email:        formData.email,
-        message:      formData.description,
-        hs_lead_status: 'NEW',
-      }
-    }),
-  });
-
-  if (response.ok) {
-    showSuccess();
-  } else {
-    showError();
-  }
-
-} catch (error) {
-  console.error('Submission error:', error);
-  showSuccess();
-}
-
-      // Send the form data to Make.com
-      const response = await fetch(WEBHOOK_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        showSuccess();
-      } else {
-        showError();
-      }
-
-    } catch (error) {
-      // Network error or webhook issue
-      console.error('Form submission error:', error);
-      // Still show success to the user — you can review failed
-      // submissions in Make.com's error logs
-      showSuccess();
-    }
-
-  });
-
-  // ---- SHOW SUCCESS STATE ----
-  function showSuccess() {
-    // Hide the form
-    form.style.display = 'none';
-
-    // Hide the contact aside (sidebar)
-    const aside = document.querySelector('.contact-aside');
+  form.addEventListener('formspree:success', function () {
+    form.style.display   = 'none';
     if (aside) aside.style.display = 'none';
-
-    // Show the success message
     successMsg.classList.add('visible');
-
-    // Scroll to the success message smoothly
     successMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
+  });
 
-  // ---- SHOW ERROR STATE ----
-  function showError() {
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Send My Request';
-    alert('Something went wrong. Please try again or email us directly.');
-  }
+  form.addEventListener('formspree:error', function () {
+    alert('Something went wrong. Please try again.');
+  });
 
-  // ---- REAL-TIME VALIDATION FEEDBACK ----
-  // Highlight fields in tan when they have valid input
   const inputs = form.querySelectorAll('input, select, textarea');
-
   inputs.forEach(function (input) {
     input.addEventListener('blur', function () {
       if (input.value.trim() !== '') {
