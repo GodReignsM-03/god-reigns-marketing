@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // ---- CONFIGURATION ----
   // Replace this URL with your real Make.com webhook when ready
   // It will look like: https://hook.us1.make.com/xxxxxxxxxxxxxxxx
-  const WEBHOOK_URL = 'YOUR_MAKE_COM_WEBHOOK_URL_HERE';
+const HUBSPOT_TOKEN = 'REPLACE_IN_VERCEL';
 
   // Grab the form elements
   const form       = document.getElementById('contactForm');
@@ -54,14 +54,36 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     // ---- SEND TO WEBHOOK ----
-    try {
-
-      // If webhook is not set up yet, just show success message
-      // (remove this block once you have a real webhook URL)
-      if (WEBHOOK_URL === 'YOUR_MAKE_COM_WEBHOOK_URL_HERE') {
-        showSuccess();
-        return;
+   try {
+  const response = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${HUBSPOT_TOKEN}`,
+    },
+    body: JSON.stringify({
+      properties: {
+        firstname:    formData.fullName.split(' ')[0],
+        lastname:     formData.fullName.split(' ').slice(1).join(' '),
+        company:      formData.businessName,
+        phone:        formData.phone,
+        email:        formData.email,
+        message:      formData.description,
+        hs_lead_status: 'NEW',
       }
+    }),
+  });
+
+  if (response.ok) {
+    showSuccess();
+  } else {
+    showError();
+  }
+
+} catch (error) {
+  console.error('Submission error:', error);
+  showSuccess();
+}
 
       // Send the form data to Make.com
       const response = await fetch(WEBHOOK_URL, {
